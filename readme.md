@@ -43,20 +43,12 @@ pip install psycopg2 cryptography python-dotenv PySide6
 git clone https://github.com/litehed/PassVault.git
 ```
 
-2. **Create a `.env` file** in the root folder:
-
-```
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-```
-
-3. **Generate a secret key for encryption:**
+2. **Generate a secret key for encryption:**
 
 ```
 python keygen.py
 ```
-
-4. **Create the database and table:**
+3. **Create the database and table:**
 
 Make sure your PostgreSQL database `thevault` exists. Then run:
 
@@ -84,9 +76,10 @@ python main.py
 ```
 passvault/
 ├── main.py               # Main GUI app
+├── login_dialog.py       # Used to check master password before entering the vault
 ├── vault_widget.py       # Popup for adding new credentials
 ├── postgres_funcs.py     # Database functions (save & fetch)
-├── .env                  # Your DB credentials (gitignored)
+├── keygen.py             # Used to generate Fernet key file
 ├── secret.key            # Fernet key file (gitignored)
 └── requirements.txt      # Python dependencies
 ```
@@ -95,7 +88,7 @@ passvault/
 
 ## To Do / Ideas
 
-- [ ]  Master password for opening the app
+- [x]  Master password for opening the app
 - [ ]  Export/import credentials
 - [ ]  Search and filter
 - [ ]  Auto-copy to clipboard

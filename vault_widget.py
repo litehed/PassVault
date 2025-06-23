@@ -3,7 +3,7 @@ from postgres_funcs import save_credential
 
 
 class VaultWidget(QWidget):
-    def __init__(self):
+    def __init__(self, db_password):
         super().__init__()
         self.setWindowTitle("Add New Credential")
         self.setFixedSize(300, 200)
@@ -27,6 +27,7 @@ class VaultWidget(QWidget):
         layout.addWidget(self.save_btn)
 
         self.setLayout(layout)
+        self.db_password = db_password
 
     def handle_save(self):
         name = self.app.text()
@@ -34,9 +35,9 @@ class VaultWidget(QWidget):
         pw = self.password.text()
 
         if name and user and pw:
-            success = save_credential(name, user, pw)
+            success = save_credential(name, user, pw, self.db_password)
             if success:
-                print("✅ Saved successfully!")
+                print("Saved successfully!")
                 self.close()
             else:
                 print("Hmmmmm, failed to save.")

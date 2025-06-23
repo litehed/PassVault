@@ -1,12 +1,5 @@
 import psycopg2
 from cryptography.fernet import Fernet
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 with open("secret.key", "rb") as f:
     key = f.read()
@@ -14,13 +7,13 @@ with open("secret.key", "rb") as f:
 cipher = Fernet(key)
 
 
-def save_credential(app_name: str, username: str, password_plain: str) -> bool:
+def save_credential(app_name: str, username: str, password_plain: str, db_pass: str) -> bool:
     conn = None
     cursor = None
     try:
         conn = psycopg2.connect(
-            user=DB_USER,
-            password=DB_PASSWORD,
+            user="postgres",
+            password=db_pass,
             host="localhost",
             port="5432",
             database="thevault"
@@ -45,14 +38,14 @@ def save_credential(app_name: str, username: str, password_plain: str) -> bool:
             conn.close()
 
 
-def fetch_credentials():
+def fetch_credentials(db_pass: str):
     conn = None
     cursor = None
     results = []
     try:
         conn = psycopg2.connect(
-            user=DB_USER,
-            password=DB_PASSWORD,
+            user="postgres",
+            password=db_pass,
             host="localhost",
             port="5432",
             database="thevault"

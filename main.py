@@ -1,14 +1,17 @@
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QMainWindow, QListWidget, QListWidgetItem, QTreeWidget, QTreeWidgetItem
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QMainWindow, QDialog, QTreeWidget, QTreeWidgetItem
 from postgres_funcs import fetch_credentials
 import sys
 from vault_widget import VaultWidget
+from login_dialog import LoginDialog
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, password):
         super().__init__()
         self.setWindowTitle("Password Manager")
         self.setFixedSize(400, 300)
+
+        self.password = password
 
         central_widget = QWidget()
         layout = QVBoxLayout()
@@ -27,12 +30,12 @@ class MainWindow(QMainWindow):
         self.load_credentials()
 
     def open_add_popup(self):
-        self.popup = VaultWidget()
+        self.popup = VaultWidget(self.password)
         self.popup.show()
 
     def load_credentials(self):
         self.tree_widget.clear()
-        for service, user, password in fetch_credentials():
+        for service, user, password in fetch_credentials(self.password):
             parent = QTreeWidgetItem([service])
             child_user = QTreeWidgetItem(["Username", user])
             child_pass = QTreeWidgetItem(["Password", password])
@@ -42,6 +45,11 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+
+    login = LoginDialog()
+    if login.exec() == QDialog.DialogCode.Accepted and login.authenticated:
+        window = MainWindow(login.entered_password)
+        window.show()
+        sys.exit(app.exec())
+    else:
+        sys.exit()
