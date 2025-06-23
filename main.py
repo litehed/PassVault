@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, Q
 from PySide6.QtCore import QTimer, Qt
 from postgres_funcs import fetch_credentials
 import sys
-from vault_widget import VaultWidget
+from vault_dialog import VaultDialog
 from login_dialog import LoginDialog
 
 
@@ -78,7 +78,7 @@ class MainWindow(QMainWindow):
             self.inactivity_timer.start()
 
     def open_add_popup(self):
-        self.popup = VaultWidget(self.db_password)
+        self.popup = VaultDialog(self.db_password)
         self.popup.show()
 
     def load_credentials(self):

@@ -18,8 +18,6 @@
 
 * Python 3.9+
 * PostgreSQL
-* A `.env` file with database credentials
-* A Fernet `secret.key` file generated with keygen file
 
 ### Python Packages
 
@@ -43,14 +41,9 @@ pip install psycopg2 cryptography python-dotenv PySide6
 git clone https://github.com/litehed/PassVault.git
 ```
 
-2. **Generate a secret key for encryption:**
+2. **Create the database and table:**
 
-```
-python keygen.py
-```
-3. **Create the database and table:**
-
-Make sure your PostgreSQL database `thevault` exists. Then run:
+Make sure your PostgreSQL database `thevault` exists. Then create the two following tables:
 
 ```sql
 CREATE TABLE credentials (
@@ -58,6 +51,12 @@ CREATE TABLE credentials (
     app_name TEXT NOT NULL,
     username TEXT NOT NULL,
     password BYTEA NOT NULL
+);
+
+
+CREATE TABLE config (
+    key TEXT PRIMARY KEY,
+    salt BYTEA NOT NULL
 );
 ```
 
@@ -80,7 +79,6 @@ passvault/
 ├── vault_widget.py       # Popup for adding new credentials
 ├── postgres_funcs.py     # Database functions (save & fetch)
 ├── keygen.py             # Used to generate Fernet key file
-├── secret.key            # Fernet key file (gitignored)
 └── requirements.txt      # Python dependencies
 ```
 

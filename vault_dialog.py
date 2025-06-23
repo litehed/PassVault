@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton
 from postgres_funcs import save_credential
 
 
-class VaultWidget(QWidget):
+class VaultDialog(QWidget):
     def __init__(self, db_password):
         super().__init__()
         self.setWindowTitle("Add New Credential")

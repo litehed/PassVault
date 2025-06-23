@@ -3,9 +3,7 @@ from cryptography.fernet import Fernet
 import base64
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
-
-
-SALT = b"\x00\xfa5+T>\xd39\x10R\x0f\xaaA\xc4[|"  # temp
+import secrets
 
 
 def derive_key_from_password(password: str, salt: bytes) -> bytes:
@@ -18,11 +16,51 @@ def derive_key_from_password(password: str, salt: bytes) -> bytes:
     return base64.urlsafe_b64encode(kdf.derive(password.encode()))
 
 
+def get_or_create_salt(db_pass: str) -> bytes:
+    conn = None
+    cursor = None
+    try:
+        conn = psycopg2.connect(
+            user="postgres",
+            password=db_pass,
+            host="localhost",
+            port="5432",
+            database="thevault"
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT salt FROM config WHERE key = %s",
+                       ('salt',))
+        result = cursor.fetchone()
+
+        if result:
+            salt_value = result[0]
+            return bytes(salt_value)
+        else:
+            new_salt = secrets.token_bytes(16)
+            cursor.execute(
+                "INSERT INTO config (key, salt) VALUES (%s, %s)",
+                ('salt', new_salt)
+            )
+            conn.commit()
+            print("Generated and stored new salt")
+            return new_salt
+
+    except psycopg2.Error as e:
+        print(f"Database error while handling salt: {e}")
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 def save_credential(app_name: str, username: str, password_plain: str, db_pass: str) -> bool:
     conn = None
     cursor = None
     try:
-        key = derive_key_from_password(db_pass, SALT)
+        key = derive_key_from_password(db_pass, get_or_create_salt(db_pass))
         cipher = Fernet(key)
 
         conn = psycopg2.connect(
@@ -57,7 +95,7 @@ def fetch_credentials(db_pass: str):
     cursor = None
     results = []
     try:
-        key = derive_key_from_password(db_pass, SALT)
+        key = derive_key_from_password(db_pass, get_or_create_salt(db_pass))
         cipher = Fernet(key)
 
         conn = psycopg2.connect(

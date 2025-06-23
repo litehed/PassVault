@@ -38,6 +38,7 @@ class LoginDialog(QDialog):
             self.authenticated = True
             self.entered_password = pw
             conn.close()
+            self.password_input.clear()
             self.accept()
         except Exception:
             self.label.setText("Incorrect password. Try again.")
