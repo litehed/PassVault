@@ -14,6 +14,7 @@ class LoginDialog(QDialog):
         layout.addWidget(self.label)
 
         self.password_input = QLineEdit()
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         layout.addWidget(self.password_input)
 
         self.login_btn = QPushButton("Unlock")
