@@ -13,7 +13,8 @@ class MainWindow(QMainWindow):
         self.setFixedSize(400, 300)
 
         self.db_password = db_password
-        self.remaining_time = 5 * 60
+        self.LOCK_TIMEOUT_SECONDS = 5 * 60
+        self.remaining_time = self.LOCK_TIMEOUT_SECONDS
 
         self.inactivity_timer = QTimer(self)
         self.inactivity_timer.setInterval(self.remaining_time * 1000)
@@ -57,7 +58,7 @@ class MainWindow(QMainWindow):
             f"Time until auto-lock: {minutes}:{seconds:02d}")
 
     def reset_inactivity_timer(self):
-        self.remaining_time = 5 * 60
+        self.remaining_time = self.LOCK_TIMEOUT_SECONDS
         self.inactivity_timer.start()
         print("Inactivity timer reset.")
 
@@ -73,7 +74,7 @@ class MainWindow(QMainWindow):
             self.db_password = login.entered_password
             self.load_credentials()
             self.setEnabled(True)
-            self.remaining_time = 5 * 60
+            self.remaining_time = self.LOCK_TIMEOUT_SECONDS
             self.countdown_timer.start()
             self.inactivity_timer.start()
 
@@ -98,6 +99,10 @@ if __name__ == "__main__":
     if login.exec() == QDialog.DialogCode.Accepted and login.authenticated:
         window = MainWindow(login.entered_password)
         window.show()
-        sys.exit(app.exec())
+        app.exec()
+        if isinstance(login.entered_password, bytearray):
+            for i in range(len(login.entered_password)):
+                login.entered_password[i] = 0   
+        sys.exit()
     else:
         sys.exit()

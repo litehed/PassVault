@@ -27,19 +27,18 @@ class LoginDialog(QDialog):
 
     def try_login(self):
         pw = self.password_input.text()
+        self.password_input.clear()
         try:
-            conn = psycopg2.connect(
+            with psycopg2.connect(
                 user="postgres",
                 password=pw,
                 host="localhost",
                 port="5432",
                 database="thevault"
-            )
-            self.authenticated = True
-            self.entered_password = pw
-            conn.close()
-            self.password_input.clear()
-            self.accept()
+            ) as conn:
+                self.authenticated = True
+                self.entered_password = pw
+                self.accept()
         except Exception:
             self.label.setText("Incorrect password. Try again.")
             self.password_input.clear()
