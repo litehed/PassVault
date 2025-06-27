@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QLabel
+from PySide6.QtGui import QIcon
 import psycopg2
 
 
@@ -6,6 +7,7 @@ class LoginDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Enter Master Password")
+        self.setWindowIcon(QIcon("VaultClosed.png"))
         self.setFixedSize(300, 100)
 
         layout = QVBoxLayout()

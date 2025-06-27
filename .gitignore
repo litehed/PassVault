@@ -3,3 +3,4 @@ secret.key
 
 __pycache__/
 *.py[cod]
+*.aseprite

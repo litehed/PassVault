@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QMainWindow, QDialog, QTreeWidget, QTreeWidgetItem, QLabel, QMenu, QMessageBox
+from PySide6.QtGui import QIcon
 from PySide6.QtCore import QTimer, Qt
 from postgres_funcs import fetch_credentials, delete_credential
 import sys
@@ -10,6 +11,7 @@ class MainWindow(QMainWindow):
     def __init__(self, db_password):
         super().__init__()
         self.setWindowTitle("Password Manager")
+        self.setWindowIcon(QIcon("VaultClosed.png"))
         self.setFixedSize(400, 300)
 
         self.db_password = db_password
@@ -65,6 +67,7 @@ class MainWindow(QMainWindow):
 
         edit_action = context_menu.addAction("Edit")
         delete_action = context_menu.addAction("Delete")
+        copy_action = context_menu.addAction(f"Copy {item.text(0)}")
 
         action = context_menu.exec(self.tree_widget.mapToGlobal(position))
 
@@ -72,6 +75,12 @@ class MainWindow(QMainWindow):
             self.edit_credential(top_level_item)
         elif action == delete_action:
             self.delete_credential(top_level_item)
+        elif action == copy_action:
+            self.copy_single_to_clipboard(item.text(1))
+
+    def copy_single_to_clipboard(self, value):
+        clipboard = QApplication.clipboard()
+        clipboard.setText(value)
 
     def update_countdown(self):
         self.remaining_time -= 1
