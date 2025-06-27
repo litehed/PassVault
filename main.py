@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QMainWindow, QDialog, QTreeWidget, QTreeWidgetItem, QLabel
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QMainWindow, QDialog, QTreeWidget, QTreeWidgetItem, QLabel, QMenu, QMessageBox
 from PySide6.QtCore import QTimer, Qt
-from postgres_funcs import fetch_credentials
+from postgres_funcs import fetch_credentials, delete_credential
 import sys
 from vault_dialog import VaultDialog
 from login_dialog import LoginDialog
@@ -39,6 +39,10 @@ class MainWindow(QMainWindow):
 
         self.tree_widget = QTreeWidget()
         self.tree_widget.setHeaderLabels(["App", "Credentials"])
+        self.tree_widget.setContextMenuPolicy(
+            Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tree_widget.customContextMenuRequested.connect(
+            self.show_context_menu)
         layout.addWidget(self.tree_widget)
 
         central_widget.setLayout(layout)
@@ -47,6 +51,27 @@ class MainWindow(QMainWindow):
         app.installEventFilter(self)
 
         self.load_credentials()
+
+    def show_context_menu(self, position):
+        item = self.tree_widget.itemAt(position)
+        if item is None:
+            return
+
+        top_level_item = item
+        while top_level_item.parent() is not None:
+            top_level_item = top_level_item.parent()
+
+        context_menu = QMenu(self)
+
+        edit_action = context_menu.addAction("Edit")
+        delete_action = context_menu.addAction("Delete")
+
+        action = context_menu.exec(self.tree_widget.mapToGlobal(position))
+
+        if action == edit_action:
+            self.edit_credential(top_level_item)
+        elif action == delete_action:
+            self.delete_credential(top_level_item)
 
     def update_countdown(self):
         self.remaining_time -= 1
@@ -60,7 +85,6 @@ class MainWindow(QMainWindow):
     def reset_inactivity_timer(self):
         self.remaining_time = self.LOCK_TIMEOUT_SECONDS
         self.inactivity_timer.start()
-        print("Inactivity timer reset.")
 
     def eventFilter(self, watched, event):
         if event.type() in (event.Type.KeyPress, event.Type.MouseButtonPress) and self.isEnabled():
@@ -81,6 +105,7 @@ class MainWindow(QMainWindow):
     def open_add_popup(self):
         self.popup = VaultDialog(self.db_password)
         self.popup.show()
+        self.popup.finished.connect(self.load_credentials)
 
     def load_credentials(self):
         self.tree_widget.clear()
@@ -90,6 +115,57 @@ class MainWindow(QMainWindow):
             child_pass = QTreeWidgetItem(["Password", password])
             parent.addChildren([child_user, child_pass])
             self.tree_widget.addTopLevelItem(parent)
+
+    def delete_credential(self, tree_item):
+        app_name = tree_item.text(0)
+
+        username = ""
+        for i in range(tree_item.childCount()):
+            child = tree_item.child(i)
+            if child.text(0) == "Username":
+                username = child.text(1)
+                break
+
+        reply = QMessageBox.question(
+            self,
+            'Confirm Deletion',
+            f'Are you sure you want to delete the credential for "{app_name}" (user: {username})?',
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            success = delete_credential(app_name, username, self.db_password)
+            if success:
+                print(f"Deleted credential for {app_name}")
+                self.load_credentials()
+            else:
+                QMessageBox.warning(
+                    self, "Error", "Failed to delete credential")
+
+    def edit_credential(self, tree_item):
+        app_name = tree_item.text(0)
+
+        username = ""
+        password = ""
+        for i in range(tree_item.childCount()):
+            child = tree_item.child(i)
+            if child.text(0) == "Username":
+                username = child.text(1)
+            elif child.text(0) == "Password":
+                password = child.text(1)
+
+        existing_data = {
+            'app_name': app_name,
+            'username': username,
+            'password': password
+        }
+
+        self.popup = VaultDialog(
+            self.db_password, edit_mode=True, existing_data=existing_data)
+        self.popup.show()
+
+        self.popup.finished.connect(self.load_credentials)
 
 
 if __name__ == "__main__":
@@ -102,7 +178,7 @@ if __name__ == "__main__":
         app.exec()
         if isinstance(login.entered_password, bytearray):
             for i in range(len(login.entered_password)):
-                login.entered_password[i] = 0   
+                login.entered_password[i] = 0
         sys.exit()
     else:
         sys.exit()
