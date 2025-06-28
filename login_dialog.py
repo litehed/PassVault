@@ -1,6 +1,8 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QLabel
 from PySide6.QtGui import QIcon
+from PySide6.QtCore import QTimer
 import psycopg2
+import time
 
 
 class LoginDialog(QDialog):
@@ -26,6 +28,8 @@ class LoginDialog(QDialog):
         self.setLayout(layout)
         self.authenticated = False
         self.entered_password = ""
+        self.failed_attempts = 0
+        self.max_attempts = 3
 
     def try_login(self):
         pw = self.password_input.text()
@@ -37,10 +41,14 @@ class LoginDialog(QDialog):
                 host="localhost",
                 port="5432",
                 database="thevault"
-            ) as conn:
+            ):
                 self.authenticated = True
                 self.entered_password = pw
                 self.accept()
         except Exception:
             self.label.setText("Incorrect password. Try again.")
+            self.failed_attempts += 1
             self.password_input.clear()
+            if self.failed_attempts >= self.max_attempts:
+                self.label.setText("Maximum attempts reached. Exiting.")
+                QTimer.singleShot(2000, self.reject)

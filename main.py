@@ -172,9 +172,8 @@ class MainWindow(QMainWindow):
 
         self.popup = VaultDialog(
             self.db_password, edit_mode=True, existing_data=existing_data)
-        self.popup.show()
-
         self.popup.finished.connect(self.load_credentials)
+        self.popup.show()
 
 
 if __name__ == "__main__":
